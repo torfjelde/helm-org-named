@@ -140,7 +140,103 @@ Uses `helm-org-named-label-regexps' to search and then
     ;; reverse so they are in the order we find them.
     (delete-dups (reverse labels))))
 
+(defun helm-org-named-candidates--find-file (file)
+    "Get all labels present in FILE.
+
+This method works by opening FILE in a buffer, followed by
+a call to `helm-org-named--org-element-get-labels' to extract the labels.
+This is very 'accurate', in the sense that it replicates the enironvemnt in
+which the lables are viewed by the reader, but it can be quite slow, e.g.
+if has significant setup-files in a org-file.
+
+This is in contrast to `helm-org-named-candidates--temp-buffer-with-insertion'
+which uses a temporary buffer and inserts the contents of FILE, thus messing up
+potential references to files in the buffer."
+  ;; This block will
+  ;; 1. Open or select existing buffer with file using `find-file-noselect'.
+  ;; 2. Execute `helm-org-named--org-element-get-labels' in the resulting `buffer'.
+  ;; 3. If `buffer' wasn't already open, kill it so as to return the to the "state"
+  ;;    of emacs that was before we ran this command.
+  (let* ((need-to-kill-p (not (find-buffer-visiting file)))
+         ;; `find-file-noselect' is like `find-file' but doesn't put the resulting buffer into focus.
+         (buffer (find-file-noselect file))
+         (labels (with-current-buffer buffer
+                   (-map
+                    (lambda (el)
+                      (let ((link (concat file "::" (plist-get (cadr el) :name))))
+                        ;; `helm' will use the first element in the `cons' list to
+                        ;; autocomplete, and then we can format the result using `helm-org-named-candidates-formatter'.
+                        (cons link el)))
+                    (helm-org-named--org-element-get-labels)))))
+    (when need-to-kill-p
+      (kill-buffer-if-not-modified buffer))
+    labels))
+
+(defun helm-org-named-candidates--temp-buffer-with-insertion (file)
+  "Get all labels present in FILE.
+
+This method works by inserting the contents of FILE into a temporary buffer,
+activates `org-mode', and then calls `helm-org-named--org-element-get-labels'.
+See `helm-org-named-candidates--temp-buffer-with-insertion-raw' for a small
+discussion of the pros and cons.
+
+Note that setup-files, etc. referenced using relative paths in FILE will
+now be incorrect, and hence you might see lots of warnings that it's unable
+to open files. In most cases this is of no relevance to the matching of labels."
+  ;; This block will
+  ;; 1. Open a temporary buffer and insert the contents of `file' into it.
+  ;; 2. Enable `org-mode'.
+  ;; 3. Disable `font-lock-mode' (hopefully, to improve performance).
+  ;; 4. Execute `helm-org-named--org-element-get-labels' in the temporary buffer.
+  (with-temp-buffer
+    (insert-file-contents file)
+    ;; Enable `org-mode' to helm `org-element'.
+    (org-mode)
+    ;; Disable `font-lock-mode' for, hopefully, improved performance.
+    ;; NOTE: This might be "too late", as `org-mode' has already enabled `font-lock-mode',
+    ;; i.e. the performance hit has already been taken.
+    (font-lock-mode -1)
+    (-map
+     (lambda (el)
+       (let ((link (concat file "::" (plist-get (cadr el) :name))))
+         ;; `helm' will use the first element in the `cons' list to
+         ;; autocomplete, and then we can format the result using `helm-org-named-candidates-formatter'.
+         (cons link el)))
+     (helm-org-named--org-element-get-labels))))
+
+(defun helm-org-named-candidates--temp-buffer-with-insertion-raw (file)
+  "Get all labels present in FILE.
+
+This method works by inserting the contents of FILE into a temporary buffer
+and then calling `helm-org-named--org-element-get-labels'. As a result, it
+is fast but not incredibly accurate in how it interprets the context of the
+labels in FILE. This is in contrast to `helm-org-named-candidates--temp-buffer-with-insertion'
+which does the same but also activates `org-mode' in the temporary buffer
+before parsing.
+
+Both this and `helm-org-named-candidates--temp-buffer-with-insertion' suffers
+from the fact that relative paths in FILE will now be incorrect. Usually this
+is of no relevance to matching of labels, but you might see lots of warnings
+regarding files that cannot be loaded during the process. In contrast
+`helm-org-named-candidates--find-file' does not suffer from this issue,
+but instead has much worse computational performance."
+  ;; This block will
+  ;; 1. Open a temporary buffer and insert the contents of `file' into it.
+  ;; 2. Enable `org-mode'.
+  ;; 3. Disable `font-lock-mode' (hopefully, to improve performance).
+  ;; 4. Execute `helm-org-named--org-element-get-labels' in the temporary buffer.
+  (with-temp-buffer
+    (insert-file-contents file)
+    (-map
+     (lambda (el)
+       (let ((link (concat file "::" (plist-get (cadr el) :name))))
+         ;; `helm' will use the first element in the `cons' list to
+         ;; autocomplete, and then we can format the result using `helm-org-named-candidates-formatter'.
+         (cons link el)))
+     (helm-org-named--org-element-get-labels))))
+
 (defun helm-org-named-candidates ()
+  "Get all labels present in FILE."
   (let* ((current-filename (with-helm-current-buffer buffer-file-name))
          (default-files (append
                          helm-org-named-files
@@ -148,30 +244,7 @@ Uses `helm-org-named-label-regexps' to search and then
          (files (if (and helm-org-named-include-current-file current-filename)
                     (cons current-filename default-files)
                   default-files)))
-    (-mapcat
-     (lambda (file)
-       ;; HACK: We use `with-temp-buffer' and `insert-file-contets'
-       ;; since it avoids having to activate `org-mode' for every file.
-       ;; Pros:
-       ;; - Faster.
-       ;; - Won't completely fail even if the files contain invalid org-formatting.
-       ;; Cons:
-       ;; - Parsing is less reliable, e.g. we might end up with a `paragraph' rather
-       ;;   a `special-block', as we should have.
-
-       ;; `find-file-noselect' is like `find-file' but doesn't put
-       ;; the resulting buffer into focus.
-       ;; (with-current-buffer (find-file-noselect file)
-       (with-temp-buffer
-         (insert-file-contents file)
-         (-map
-          (lambda (el)
-            (let ((link (concat file "::" (plist-get (cadr el) :name))))
-              ;; `helm' will use the first element in the `cons' list to
-              ;; autocomplete, and then we can format the result using `helm-org-named-candidates-formatter'.
-              (cons link el)))
-          (helm-org-named--org-element-get-labels))))
-     (-uniq files))))
+    (-mapcat #'helm-org-named-candidates--temp-buffer-with-insertion (-uniq files))))
 
 (defun helm-org-named-candidates-formatter--default (&block-type)
   (format ""))
