@@ -24,7 +24,6 @@
 
 ;;; Code:
 
-(require 'cl) ;; gives use stuff like `case'
 (require 'cl-lib)
 
 (require 'helm)
@@ -173,7 +172,7 @@ When nil, the window will split."
      helm-org-named-column-separator
      (concat
       (helm-substring-by-width
-       (case element-type
+       (cl-case element-type
          ('special-block (helm-org-named-candidates-formatter--special-block properties))
          ('src-block (helm-org-named-candidates-formatter--src-block properties))
          (t (helm-org-named-candidates-formatter--default element-type)))
