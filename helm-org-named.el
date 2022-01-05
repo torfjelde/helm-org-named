@@ -67,6 +67,11 @@ If FILEXT is provided, return files with extension FILEXT instead."
   :type 'string
   :group 'helm-org-named)
 
+(defcustom helm-org-named-directories nil
+  "Files to search for named blocks in."
+  :type 'list
+  :group 'helm-org-named)
+
 (defcustom helm-org-named-files nil
   "Files to search for named blocks in."
   :type 'list
@@ -109,9 +114,12 @@ When nil, the window will split."
 
 (defun helm-org-named-candidates ()
   (let* ((current-filename (with-helm-current-buffer buffer-file-name))
+         (default-files (append
+                         helm-org-named-files
+                         (-mapcat (lambda (dir) (helm-org-named--find-org-file-recursively dir)) helm-org-named-directories)))
          (files (if (and helm-org-named-include-current-file current-filename)
-                   (-uniq (append (list current-filename) helm-org-named-files))
-                 (-uniq helm-org-named-files))))
+                    (cons current-filename default-files)
+                  default-files)))
     (-mapcat
      (lambda (file)
        ;; HACK: We use `with-temp-buffer' and `insert-file-contets'
@@ -135,7 +143,7 @@ When nil, the window will split."
               ;; autocomplete, and then we can format the result using `helm-org-named-candidates-formatter'.
               (cons link el)))
           (helm-org-named--org-element-get-labels))))
-     files)))
+     (-uniq files))))
 
 (defun helm-org-named-candidates-formatter--default (&block-type)
   (format ""))
