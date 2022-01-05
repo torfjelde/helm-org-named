@@ -260,9 +260,6 @@ but instead has much worse computational performance."
       (propertize (format "[src:%s]" lang) 'face 'org-meta-line)
     (propertize "[src]" 'face 'org-meta-line)))
 
-;; Right-aligning in `helm'.
-;; - `helm-bibtex-candidates-formatter' computes the bibtex window with by calling `bibtex-completion-format-entry'.
-;; - Taking some inspiration from `helm-highlight-buffers'.
 (defun helm-org-named-candidates-formatter--visual (link element-type properties)
   (let* ((path-and-name (split-string link "::"))
          (path (car path-and-name))
@@ -298,12 +295,14 @@ but instead has much worse computational performance."
         candidates))
 
 (defun helm-org-named--candidate-description (default-description)
+  "Prompts in minibuffer for a description, with the default value being DEFAULT-DESCRIPTION."
   (let ((description (read-from-minibuffer "Description: " default-description)))
     (if (string-empty-p description)
         nil
       description)))
 
 (defun helm-org-named--insert-candidate (candidate)
+  "Insert CANDIDATE as a org-link at point."
   (let* ((link (car candidate))
         (path-and-name (split-string link "::"))
         (path (car path-and-name))
@@ -322,6 +321,7 @@ but instead has much worse computational performance."
         (insert (format "%s:%s" "file" link)))))
 
 (defun helm-org-named--open-candidate (candidate)
+  "Open CANDIDATE as an org-link."
   (let ((link (car candidate)))
     (org-link-open-from-string (format "%s:%s" "file" link))))
 
