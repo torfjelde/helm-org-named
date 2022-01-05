@@ -31,31 +31,6 @@
 
 (require 'org)
 (require 'org-element)
-(require 'org-ref)
-
-;; recursively find .org files in provided directory
-;; modified from an Emacs Lisp Intro example
-;; https://github.com/suvayu/.emacs.d/blob/93904ab424fa2d3202637dcbbc9e0fabe5d7dbd9/lisp/nifty.el#L450-L471
-(defun helm-org-named--find-org-file-recursively (&optional directory filext)
-  "Return .org and .org_archive files recursively from DIRECTORY.
-If FILEXT is provided, return files with extension FILEXT instead."
-  (interactive "DDirectory: ")
-  (let* (org-file-list
-	 (case-fold-search t)	      ; filesystems are case sensitive
-	 (file-name-regex "^[^.#].*") ; exclude dot, autosave, and backup files
-	 (filext (or filext "org$\\\|org_archive"))
-	 (fileregex (format "%s\\.\\(%s$\\)" file-name-regex filext))
-	 (cur-dir-list (directory-files directory t file-name-regex)))
-    ;; loop over directory listing
-    (dolist (file-or-dir cur-dir-list org-file-list) ; returns org-file-list
-      (cond
-       ((file-regular-p file-or-dir) ; regular files
-	(if (string-match fileregex file-or-dir) ; org files
-	    (push file-or-dir org-file-list)))
-       ((file-directory-p file-or-dir)
-	(dolist (org-file (helm-org-named--find-org-file-recursively file-or-dir filext)
-			  org-file-list) ; add files found to result
-	  (push org-file org-file-list)))))))
 
 (defgroup helm-org-named nil
   "Helm interface for named blocks in Org-files."
@@ -93,10 +68,64 @@ When nil, the window will split."
   :group 'helm-org-named
   :type 'integer)
 
+;; Copied from `org-ref-label-re'.
+(defvar helm-org-named-label-regexps-inner
+  (rx (group-n 1 (one-or-more (any word "-.:?!`'/*@+|(){}<>&_^$#%~"))))
+  "Regexp for labels.")
+
+;; Copied from `org-ref-ref-label-regexps'.
+(defvar helm-org-named-label-regexps
+  (list
+   (concat ":ID:\\s-+" helm-org-named-label-regexps-inner "\\_>")
+   ;; CUSTOM_ID in a heading
+   (concat ":CUSTOM_ID:\\s-+" helm-org-named-label-regexps-inner "\\_>")
+   ;; #+name
+   (concat "^\\s-*#\\+name:\\s-+" helm-org-named-label-regexps-inner "\\_>")
+   ;; ;; labels in latex
+   ;; (concat "\\\\label{" helm-org-named-label-regexps-inner "}")
+   ;; ;; A target, code copied from org-target-regexp and group 1 numbered.
+   ;; (let ((border "[^<>\n\r \t]"))
+   ;;   (format "<<\\(?1:%s\\|%s[^<>\n\r]*%s\\)>>"
+   ;;       border border border))
+   ;; ;; A label link
+   ;; (concat "label:" helm-org-named-label-regexps-inner "\\_>")
+   ;; "\\\\lstset{.*label=\\(?1:.*?\\),.*}"
+   )
+  "List of regular expressions to labels.
+The label should always be in group 1.")
+
+;; recursively find .org files in provided directory
+;; modified from an Emacs Lisp Intro example
+;; https://github.com/suvayu/.emacs.d/blob/93904ab424fa2d3202637dcbbc9e0fabe5d7dbd9/lisp/nifty.el#L450-L471
+(defun helm-org-named--find-org-file-recursively (&optional directory filext)
+  "Return .org and .org_archive files recursively from DIRECTORY.
+If FILEXT is provided, return files with extension FILEXT instead."
+  (interactive "DDirectory: ")
+  (let* (org-file-list
+	 (case-fold-search t)	      ; filesystems are case sensitive
+	 (file-name-regex "^[^.#].*") ; exclude dot, autosave, and backup files
+	 (filext (or filext "org$\\\|org_archive"))
+	 (fileregex (format "%s\\.\\(%s$\\)" file-name-regex filext))
+	 (cur-dir-list (directory-files directory t file-name-regex)))
+    ;; loop over directory listing
+    (dolist (file-or-dir cur-dir-list org-file-list) ; returns org-file-list
+      (cond
+       ((file-regular-p file-or-dir) ; regular files
+	(if (string-match fileregex file-or-dir) ; org files
+	    (push file-or-dir org-file-list)))
+       ((file-directory-p file-or-dir)
+	(dolist (org-file (helm-org-named--find-org-file-recursively file-or-dir filext)
+			  org-file-list) ; add files found to result
+	  (push org-file org-file-list)))))))
+
 ;; Inspired by `org-ref-get-labels'.
 (defun helm-org-named--org-element-get-labels ()
+  "Get all labels in the current buffer.
+
+Uses `helm-org-named-label-regexps' to search and then
+`org-element-context' to extract the context of the match."
   (let ((case-fold-search t)
-	    (rx (string-join org-ref-ref-label-regexps "\\|"))
+	    (rx (string-join helm-org-named-label-regexps "\\|"))
 	    (labels '()))
     (save-excursion
       (goto-char (point-min))
