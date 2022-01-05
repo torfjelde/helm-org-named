@@ -195,18 +195,28 @@ When nil, the window will split."
           )
         candidates))
 
-(defun helm-org-named--candidate-description (link)
-  (let* ((default-description (cadr (split-string link "::")))
-        (description (read-from-minibuffer "Description: " default-description)))
+(defun helm-org-named--candidate-description (default-description)
+  (let ((description (read-from-minibuffer "Description: " default-description)))
     (if (string-empty-p description)
         nil
       description)))
 
 (defun helm-org-named--insert-candidate (candidate)
-  (let ((link (car candidate)))
-      (if-let ((_ (eq major-mode 'org-mode))
-               (description (helm-org-named--candidate-description link)))
-          (insert (format "[[%s:%s][%s]]" "file" link description))
+  (let* ((link (car candidate))
+        (path-and-name (split-string link "::"))
+        (path (car path-and-name))
+        (name (cadr path-and-name)))
+    (if-let ((_ (eq major-mode 'org-mode))
+               (description (helm-org-named--candidate-description name)))
+        (insert
+         ;; If the selected `candidate' is from the current file, we just make it a simple link
+         ;; rather than a `file:' link.
+         ;; AFAIK there's no drawback to doing this + some functionality handles file-links
+         ;; differently, e.g. in LaTeX export a `file:' link will be considered an external link
+         ;; irregardless of whether it's pointing to the current file or not.
+         (if (f-equal-p path (with-helm-current-buffer (buffer-file-name)))
+             (format "[[%s][%s]]" name description)
+           (format "[[%s:%s][%s]]" "file" link description)))
         (insert (format "%s:%s" "file" link)))))
 
 (defun helm-org-named--open-candidate (candidate)
