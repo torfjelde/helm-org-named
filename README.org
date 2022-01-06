@@ -6,14 +6,14 @@
 
 * Screencasts
 ** Simple example
-[[./simple-demo.gif]]
-
 We can perform completion both within and across files.
 
-** Real example
-[[./real-demo.gif]]
+[[./simple-demo.gif]]
 
+** Real example
 Real example of calling =helm-org-named-insert= on my notes. Note how some candidates are empty; this is simply because these blocks have an empty =#+name= entry which I consider a "bug" of my note-taking rather than anything else.
+
+[[./real-demo.gif]]
 
 * Installation
 If you have [[https://github.com/raxod502/straight.el][straight.el]] set up and =use-package= installed (as per [[https://github.com/raxod502/straight.el#integration-with-use-package][straight.el#integration-with-use-package]]), then it's a simple matter:
