@@ -22,7 +22,7 @@ If you have [[https://github.com/raxod502/straight.el][straight.el]] set up and 
 (use-package helm-org-named
   :straight (:type git :host github :repo "torfjelde/helm-org-named")
   ;; Optional keyding.
-  :bind ("C-c [" . helm-org-named)
+  :bind ("C-c ]" . helm-org-named)
   :config
   ;; Inform `helm-org-named' where to search for labels.
   (setq helm-org-named-files '("path/to/file1" "path/to/file2"))
@@ -43,5 +43,5 @@ Otherwise, the simplest way is to just download the =helm-org-named.el= file and
 
 ;; Optional keybinding.
 (require 'bind-key)
-(bind-key "C-c [" #'helm-org-named)
+(bind-key "C-c ]" #'helm-org-named)
 #+end_src
