@@ -335,7 +335,7 @@ but instead has much worse computational performance."
   "Source for searching named blocks in Org files.")
 
 ;;;###autoload
-(defun helm-org-named-insert ()
+(defun helm-org-named ()
   (interactive)
   (helm :sources helm-org-named-source
         :buffer "*org-blog*"
