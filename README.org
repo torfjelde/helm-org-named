@@ -5,11 +5,11 @@
 **BE AWARE:** This package is very bare-bones and is something I threw together because I wanted completion for my personal notes. Use with caution.
 
 * Screencasts
+/Simple example how we can perform completion both within and across files./
 [[./simple-demo.gif]]
-Simple example how we can perform completion both within and across files.
 
+/Real example of calling =helm-org-named-insert= on my notes. Note how some candidates are empty; this is simply because these blocks have an empty =#+name= entry which I consider a "bug" of my note-taking rather than anything else./
 [[./real-demo.gif]]
-Real example of calling =helm-org-named-insert= on my notes. Note how some candidates are empty; this is simply because these blocks have an empty =#+name= entry.
 
 * Installation
 If you have [[https://github.com/raxod502/straight.el][straight.el]] set up and =use-package= installed (as per [[https://github.com/raxod502/straight.el#integration-with-use-package][straight.el#integration-with-use-package]]), then it's a simple matter:
