@@ -5,10 +5,10 @@
 **BE AWARE:** This package is very bare-bones and is something I threw together because I wanted completion for my personal notes. Use with caution.
 
 * Screencasts
-/Simple example how we can perform completion both within and across files./
+Simple example how we can perform completion both within and across files.
 [[./simple-demo.gif]]
 
-/Real example of calling =helm-org-named-insert= on my notes. Note how some candidates are empty; this is simply because these blocks have an empty =#+name= entry which I consider a "bug" of my note-taking rather than anything else./
+Real example of calling =helm-org-named-insert= on my notes. Note how some candidates are empty; this is simply because these blocks have an empty =#+name= entry which I consider a "bug" of my note-taking rather than anything else.
 [[./real-demo.gif]]
 
 * Installation
