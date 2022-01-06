@@ -2,9 +2,32 @@
 
 =helm.el= source for completion of labels found in org-files. In particular labels defined using the =#+name= syntax.
 
-* Screencast
+**BE AWARE:** This package is very bare-bones and is something I threw together because I wanted completion for my personal notes. Use with caution.
+
+* Screencasts
 #+CAPTION: Simple example how we can perform completion both within and across files.
 [[./simple-demo.gif]]
 
 #+CAPTION: Real example of calling =helm-org-named-insert= on my notes. Note how some candidates are empty; this is simply because these blocks have an empty =#+name= entry.
 [[./real-demo.gif]]
+
+* Installation
+If you have [[https://github.com/raxod502/straight.el][straight.el]] set up and =use-package= installed (as per [[https://github.com/raxod502/straight.el#integration-with-use-package][straight.el#integration-with-use-package]]), then it's a simple matter:
+
+#+begin_src emacs-lisp
+(use-package helm-org-named
+  :straight (:type git :host github :repo "torfjelde/helm-org-named")
+  :config
+  (setq helm-org-named-files '("path/to/file1" "path/to/file2"))
+  (setq helm-org-named-directories '("path/to/directory1" "path/to/directory2")))
+#+end_src
+
+Otherwise, the simplest way is to just download the =helm-org-named.el= file and do
+
+#+begin_src emacs-lisp
+(load-file "/path/to/helm-org-named.el")
+(require 'helm-org-named)
+
+(setq helm-org-named-files '("path/to/file1" "path/to/file2"))
+(setq helm-org-named-directories '("path/to/directory1" "path/to/directory2"))
+#+end_src
