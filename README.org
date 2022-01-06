@@ -3,7 +3,8 @@
 =helm.el= source for completion of labels found in org-files. In particular labels defined using the =#+name= syntax.
 
 * Screencast
-
+#+CAPTION: Simple example how we can perform completion both within and across files.
 [[./simple-demo.gif]]
 
+#+CAPTION: Real example of calling =helm-org-named-insert= on my notes. Note how some candidates are empty; this is simply because these blocks have an empty =#+name= entry.
 [[./real-demo.gif]]
