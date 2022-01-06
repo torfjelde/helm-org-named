@@ -1,4 +1,4 @@
-#+TITLE: `helm-org-named`
+#+TITLE: =helm-org-named=
 
 =helm.el= source for completion of labels found in org-files. In particular labels defined using the =#+name= syntax.
 
