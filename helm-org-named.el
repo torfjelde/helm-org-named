@@ -191,7 +191,10 @@ to open files. In most cases this is of no relevance to the matching of labels."
   (with-temp-buffer
     (insert-file-contents file)
     ;; Enable `org-mode' to helm `org-element'.
-    (org-mode)
+    ;; HACK: Supress messages because there will be a bunch of "Unable to read file ..."
+    ;; due to the temporary buffer not working with from the correct path.
+    (let ((inhibit-message t))
+        (org-mode))
     ;; Disable `font-lock-mode' for, hopefully, improved performance.
     ;; NOTE: This might be "too late", as `org-mode' has already enabled `font-lock-mode',
     ;; i.e. the performance hit has already been taken.
