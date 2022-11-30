@@ -1,4 +1,4 @@
-;;; helm-org-named.el --- Helm completion for named blocks with Org-mode  -*- lexical-binding: t; -*-
+;;; helm-org-named.el --- Helm completion for named blocks with Org-mode  -*- lexical-binding: nil; -*-
 
 ;; Copyright (C) 2022  tor
 
@@ -119,6 +119,7 @@ If FILEXT is provided, return files with extension FILEXT instead."
 	  (push org-file org-file-list)))))))
 
 ;; Inspired by `org-ref-get-labels'.
+;; TODO: Add support for headings with IDs, etc.
 (defun helm-org-named--org-element-get-labels ()
   "Get all labels in the current buffer.
 
@@ -338,13 +339,30 @@ but instead has much worse computational performance."
   "Source for searching named blocks in Org files.")
 
 ;;;###autoload
-(defun helm-org-named ()
-  (interactive)
-  (helm :sources helm-org-named-source
-        :buffer "*org-blog*"
-        :prompt "Name: "
-        :candidate-number-limit helm-org-named-candidate-limit
-        :full-frame helm-org-named-full-frame))
+(defun helm-org-named (arg)
+  "Search for named blocks in Org files.
+
+With a `C-u' prefix argument ARG, search for named blocks in the current directory.
+
+With a `C-u C-u' prefix argument ARG, search for named blocks in the current file.
+"
+  (interactive "p")
+  ;; We're using `dynamic' scoping here so this should simply override the
+  ;; values of `helm-org-named-files' and `helm-org-named-directories' as desired.
+  ;; TODO: Figure out if there's a better way to do this.
+  (let ((helm-org-named-files (cond
+                               ((= arg 1) helm-org-named-files)
+                               ((= arg 4) (list (with-helm-current-buffer buffer-file-name)))
+                               ((= arg 16) (list (with-helm-current-buffer buffer-file-name)))))
+        (helm-org-named-directories (cond
+                                     ((= arg 1) helm-org-named-directories)
+                                     ((= arg 4) (list (file-name-directory (with-helm-current-buffer buffer-file-name))))
+                                     ((= arg 16) '()))))
+    (helm :sources helm-org-named-source
+          :buffer "*org-blog*"
+          :prompt "Name: "
+          :candidate-number-limit helm-org-named-candidate-limit
+          :full-frame helm-org-named-full-frame)))
 
 (provide 'helm-org-named)
 ;;; helm-org-named.el ends here
